@@ -34,5 +34,41 @@ contract RandomWinnerGame is VRFConsumerBase, Ownable {
     // emitted when the game ends
     event GameEnded(uint256 gameId, address winner, bytes32 requestId);
 
+    /**
+     * constructor inherits a VRFConsumerBase and initiates the values for keyHash, fee and gameStarted
+     * @param vrfCoordinator address of VRFCoordinator contract
+     * @param linkToken address of LINK token contract
+     * @param vrfFee the amount of LINK to send with the request
+     * @param vrfKeyHash ID of public key against which randomness is generated
+     */
+    constructor(
+        address vrfCoordinator,
+        address linkToken,
+        bytes32 vrfKeyHash,
+        uint256 vrfFee
+    ) VRFConsumerBase(vrfCoordinator, linkToken) {
+        keyHash = vrfKeyHash;
+        fee = vrfFee;
+        gameStarted = false;
+    }
+
+    /**
+     * startGame starts the game by setting appropriate values for all the variables
+     */
+    function startGame(uint8 _maxPlayers, uint256 _entryFee) public onlyOwner {
+        // Check if there is a game already running
+        require(!gameStarted, "Game is currently running");
+        // empty the players array
+        delete players;
+        // set the max players for this game
+        maxPlayers = _maxPlayers;
+        // set the game started to true
+        gameStarted = true;
+        // setup the entryFee for the game
+        entryFee = _entryFee;
+        gameId += 1;
+        emit GameStarted(gameId, maxPlayers, entryFee);
+    }
+
     
 }
