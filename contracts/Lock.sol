@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 
 contract RandomWinnerGame is VRFConsumerBase, Ownable {
-    //Chainlink variables
+    // Chainlink variables
     // The amount of LINK to send with the request
     uint256 public fee;
 
@@ -96,7 +96,10 @@ contract RandomWinnerGame is VRFConsumerBase, Ownable {
      * @param requestId  this ID is unique for the request we sent to the VRF Coordinator
      * @param randomness this is a random unit256 generated and returned to us by the VRF Coordinator
      */
-    function fulfillRandomness(bytes32 requestId, uint256 randomness) internal virtual override {
+    function fulfillRandomness(
+        bytes32 requestId,
+        uint256 randomness
+    ) internal virtual override {
         // We want out winnerIndex to be in the length from 0 to players.length-1
         // For this we mod it with the player.length value
         uint256 winnerIndex = randomness % players.length;
@@ -105,15 +108,26 @@ contract RandomWinnerGame is VRFConsumerBase, Ownable {
         address winner = players[winnerIndex];
 
         // send the ether in the contract to the winner
-        (bool sent,) = winner.call{value: address(this).balance}("");
+        (bool sent, ) = winner.call{value: address(this).balance}("");
         require(sent, "Failed to send Ether");
 
         // Emit that the game has ended
-        emit GameEnded(gameId, winner,requestId);
+        emit GameEnded(gameId, winner, requestId);
         // set the gameStarted variable to false
         gameStarted = false;
     }
 
-
-
+    /**
+     * getRandomWinner is called to start the process of selecting a random winner
+     */
+    function getRandomWinner() private returns (bytes32 requestId) {
+        // LINK is an internal interface for Link token found within the VRFConsumerBase
+        // Here we use the balanceOF method from that interface to make sure that our
+        // contract has enough link so that we can request the VRFCoordinator for randomness
+        require(LINK.balanceOf(address(this)) >= fee, "Not enough LINK");
+        // Make a request to the VRF coordinator.
+        // requestRandomness is a function within the VRFConsumerBase
+        // it starts the process of randomness generation
+        return requestRandomness(keyHash, fee);
+    }
 }
