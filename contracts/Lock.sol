@@ -130,4 +130,10 @@ contract RandomWinnerGame is VRFConsumerBase, Ownable {
         // it starts the process of randomness generation
         return requestRandomness(keyHash, fee);
     }
+
+    // Function to receive Ether. msg.data must be empty
+    receive() external payable {}
+
+    // Fallback function is called when msg.data is not empty
+    fallback() external payable {}
 }
